@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSession, signOut } from "next-auth/react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ModeToggle } from "@/components/mode-toggle"
@@ -23,7 +24,8 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isLoginOpen, setIsLoginOpen] = useState(false)
   const [isSignupOpen, setIsSignupOpen] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const { data: session } = useSession()
+  const isLoggedIn = !!session
   const { toast } = useToast()
 
   useEffect(() => {
@@ -40,9 +42,6 @@ export default function Navbar() {
   }, [])
 
   const handleLogin = (userData: { email: string; password: string }) => {
-    // Simulate login
-    console.log("Login data:", userData)
-    setIsLoggedIn(true)
     setIsLoginOpen(false)
     toast({
       title: "Login Successful",
@@ -51,9 +50,6 @@ export default function Navbar() {
   }
 
   const handleSignup = (userData: { name: string; email: string; password: string }) => {
-    // Simulate signup
-    console.log("Signup data:", userData)
-    setIsLoggedIn(true)
     setIsSignupOpen(false)
     toast({
       title: "Account Created",
@@ -61,8 +57,8 @@ export default function Navbar() {
     })
   }
 
-  const handleLogout = () => {
-    setIsLoggedIn(false)
+  const handleLogout = async () => {
+    await signOut()
     toast({
       title: "Logged Out",
       description: "You have been logged out successfully.",

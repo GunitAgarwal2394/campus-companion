@@ -19,6 +19,8 @@ import {
   Clock,
   RotateCcw,
   Music,
+  MessageSquare,
+  Smartphone
 } from "lucide-react"
 import { Toaster } from "@/components/ui/toaster"
 import { useToast } from "@/components/ui/use-toast"
@@ -63,6 +65,10 @@ export default function ProductivityPage() {
 
   // Quote State
   const [currentQuote, setCurrentQuote] = useState(quotes[0])
+
+  // WhatsApp State
+  const [phoneNumber, setPhoneNumber] = useState("")
+  const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false)
 
   const { toast } = useToast()
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -258,6 +264,36 @@ export default function ProductivityPage() {
     setIsMuted(!isMuted)
   }
 
+  const handleSendWhatsAppReminder = async () => {
+    if (!phoneNumber) {
+      toast({ title: "Error", description: "Please enter your WhatsApp phone number", variant: "destructive" })
+      return
+    }
+
+    setIsSendingWhatsApp(true)
+    try {
+      const response = await fetch("/api/whatsapp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: `Campus Companion Reminder: It's time to focus! Get back to your studies. Quote of the day: "${currentQuote.text}"`,
+          toPhoneNumber: phoneNumber,
+        }),
+      })
+      
+      const data = await response.json()
+      if (response.ok) {
+        toast({ title: "Reminder Sent!", description: "Check your WhatsApp for the study reminder." })
+      } else {
+        toast({ title: "Error", description: data.error || "Failed to send message", variant: "destructive" })
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Network error", variant: "destructive" })
+    } finally {
+      setIsSendingWhatsApp(false)
+    }
+  }
+
   // Change quote every 60 seconds
   useEffect(() => {
     const interval = setInterval(() => {
@@ -432,18 +468,48 @@ export default function ProductivityPage() {
           </Card>
         </div>
 
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle>Weekly Motivation</CardTitle>
-            <CardDescription>Inspirational quotes to keep you motivated</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="p-6 bg-primary/5 rounded-lg text-center">
-              <blockquote className="text-xl italic font-medium">"{currentQuote.text}"</blockquote>
-              <cite className="mt-2 block text-sm text-gray-500 dark:text-gray-400">— {currentQuote.author}</cite>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Weekly Motivation</CardTitle>
+              <CardDescription>Inspirational quotes to keep you motivated</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="p-6 bg-primary/5 rounded-lg text-center h-full flex flex-col justify-center min-h-[160px]">
+                <blockquote className="text-xl italic font-medium">"{currentQuote.text}"</blockquote>
+                <cite className="mt-2 block text-sm text-gray-500 dark:text-gray-400">— {currentQuote.author}</cite>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center"><MessageSquare className="w-5 h-5 mr-2 text-green-500" /> WhatsApp Reminders</CardTitle>
+              <CardDescription>Send an instant study reminder to your phone</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Enter your phone number (with country code, e.g., +1234567890) to receive the current motivational quote and a study nudge via WhatsApp.
+                </p>
+                <div className="flex space-x-2">
+                  <div className="relative flex-1">
+                    <Smartphone className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                    <Input
+                      placeholder="+1234567890"
+                      className="pl-8"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                    />
+                  </div>
+                  <Button onClick={handleSendWhatsAppReminder} disabled={isSendingWhatsApp}>
+                    {isSendingWhatsApp ? "Sending..." : "Send Reminder"}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </main>
 
       <Footer />

@@ -35,14 +35,12 @@ export function SignupModal({ isOpen, onClose, onSignup, onLoginClick }: SignupM
     setIsLoading(true)
 
     try {
-      // In a real app, this would call the API
-      const response = await fetch("/api/auth", {
+      const response = await fetch("/api/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          action: "signup",
           name,
           email,
           password,
@@ -51,11 +49,10 @@ export function SignupModal({ isOpen, onClose, onSignup, onLoginClick }: SignupM
 
       const data = await response.json()
 
-      if (data.success) {
+      if (response.ok && data.success) {
         onSignup({ name, email, password })
       } else {
-        // Handle error
-        setError(data.message || "Signup failed")
+        setError(data.error || "Signup failed")
       }
     } catch (error) {
       console.error("Signup error:", error)

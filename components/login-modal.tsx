@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
+import { signIn } from "next-auth/react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,26 +26,16 @@ export function LoginModal({ isOpen, onClose, onLogin, onSignupClick }: LoginMod
     setIsLoading(true)
 
     try {
-      // In a real app, this would call the API
-      const response = await fetch("/api/auth", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: "login",
-          email,
-          password,
-        }),
+      const result = await signIn("credentials", {
+        redirect: false,
+        email,
+        password,
       })
 
-      const data = await response.json()
-
-      if (data.success) {
-        onLogin({ email, password })
+      if (result?.error) {
+        console.error("Login failed:", result.error)
       } else {
-        // Handle error
-        console.error("Login failed:", data.message)
+        onLogin({ email, password })
       }
     } catch (error) {
       console.error("Login error:", error)
